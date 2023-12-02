@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "file_io.h"
@@ -37,6 +38,8 @@ bool day_01_a(char* const out_buffer, const int out_buffer_size) {
         // sum.
         sum += (ascii_digit_to_int(first_digit_char) * 10) + ascii_digit_to_int(last_digit_char);
     }
+
+    free(lines);
 
     int ret = snprintf(out_buffer, out_buffer_size, "%d", sum);
     if (ret <= 0 || ret >= out_buffer_size) {
