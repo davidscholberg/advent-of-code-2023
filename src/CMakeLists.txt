@@ -13,3 +13,4 @@ target_sources(
 )
 
 add_subdirectory(solutions)
+add_subdirectory(string_stuff)

@@ -2,6 +2,7 @@ target_sources(
     aoc
     PRIVATE
     day_01_a.c
+    day_01_b.c
     run.c
     run.h
     solutions.h

@@ -7,3 +7,4 @@
     bool day_##day##_##part(char* const out_buffer, const int out_buffer_size)
 
 solution_declaration(01, a);
+solution_declaration(01, b);

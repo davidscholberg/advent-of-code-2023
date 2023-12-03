@@ -14,7 +14,7 @@ typedef bool (*solution_fn)(char* const, const int);
 #define part_count 2
 
 static const solution_fn solutions[][part_count] = {
-    {day_01_a, NULL},
+    {day_01_a, day_01_b},
 };
 
 static const int day_count = sizeof(solutions) / sizeof(solutions[0]);
