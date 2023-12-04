@@ -4,7 +4,6 @@
 
 #define alphabet_size 26
 #define digit_count 10
-#define digit_word_max_length 5
 #define digit_word_min_length 3
 
 #define ascii_digit_to_int(digit) (digit - 48)
@@ -12,92 +11,32 @@
 #define is_lower_alpha(c) (c >= 'a' && c <= 'z')
 #define to_lower(c) ((c >= 'A' && c <= 'Z') ? (c + 32) : c)
 
-// Struct that holds a digit word letter, the numerical value of its corresponding digit
-// word if the letter is the last letter of the word (or -1 otherwise), and the amount to skip ahead
-// in a string if the digit words can overlap.
-typedef struct digit_word_letter {
-    char letter;
-    int digit_value;
-    int skip_ahead;
-} digit_word_letter;
+// Struct that holds a digit word, the length of the digit word, and the amount to skip ahead in a
+// string that contains the digit word (note that this value is shorter than the length of the digit
+// word for those words that contain ending letters that match the starting letters of other
+// digits).
+typedef struct digit_word {
+    const char* const word;
+    const int word_length;
+    const int skip_ahead;
+} digit_word;
 
-// 2D array that contains the spelling of each digit word, with the numerical value of the digit
-// word located at the end of each word.
-static const digit_word_letter digit_word_array[digit_count][digit_word_max_length] = {
-    {
-        {'z', -1, -1},
-        {'e', -1, -1},
-        {'r', -1, -1},
-        {'o', 0, 3},
-        {0, -1, -1},
-    },
-    {
-        {'o', -1, -1},
-        {'n', -1, -1},
-        {'e', 1, 2},
-        {0, -1, -1},
-        {0, -1, -1},
-    },
-    {
-        {'t', -1, -1},
-        {'w', -1, -1},
-        {'o', 2, 2},
-        {0, -1, -1},
-        {0, -1, -1},
-    },
-    {
-        {'t', -1, -1},
-        {'h', -1, -1},
-        {'r', -1, -1},
-        {'e', -1, -1},
-        {'e', 3, 4},
-    },
-    {
-        {'f', -1, -1},
-        {'o', -1, -1},
-        {'u', -1, -1},
-        {'r', 4, 4},
-        {0, -1, -1},
-    },
-    {
-        {'f', -1, -1},
-        {'i', -1, -1},
-        {'v', -1, -1},
-        {'e', 5, 3},
-        {0, -1, -1},
-    },
-    {
-        {'s', -1, -1},
-        {'i', -1, -1},
-        {'x', 6, 3},
-        {0, -1, -1},
-        {0, -1, -1},
-    },
-    {
-        {'s', -1, -1},
-        {'e', -1, -1},
-        {'v', -1, -1},
-        {'e', -1, -1},
-        {'n', 7, 4},
-    },
-    {
-        {'e', -1, -1},
-        {'i', -1, -1},
-        {'g', -1, -1},
-        {'h', -1, -1},
-        {'t', 8, 4},
-    },
-    {
-        {'n', -1, -1},
-        {'i', -1, -1},
-        {'n', -1, -1},
-        {'e', 9, 3},
-        {0, -1, -1},
-    },
+// Array of all possible digit_words, along with their lengths and skip_ahead values.
+static const digit_word digit_words[digit_count] = {
+    {"zero", 4, 3},
+    {"one", 3, 2},
+    {"two", 3, 2},
+    {"three", 5, 4},
+    {"four", 4, 4},
+    {"five", 4, 3},
+    {"six", 3, 3},
+    {"seven", 5, 4},
+    {"eight", 5, 4},
+    {"nine", 4, 3},
 };
 
-// Map of first letters of digit words to the location in digit_word_array to start checking. Values
-// of -1 indicate that the letter is not a first letter of any digit word.
+// Map of first letters of digit words to the location in digit_words array to start checking.
+// Values of -1 indicate that the letter is not a first letter of any digit word.
 static const int digit_first_letter_map[alphabet_size] = {
     -1,  // a
     -1,  // b
@@ -156,27 +95,27 @@ int digit_at(
     if (!is_lower_alpha(first_char)) {
         return -1;
     }
-    int digit_word_array_index = digit_first_letter_map[first_char - 'a'];
-    if (digit_word_array_index == -1) {
+    int digit_words_index = digit_first_letter_map[first_char - 'a'];
+    if (digit_words_index == -1) {
         return -1;
     }
-    int digit_word_index = 1;
+    int digit_letter_index = 1;
     // We need 1 retry in the event that the first letter can spell two different digit words (there
     // are three first letters for which this is the case).
     int retries = char_shares_first_letter(first_char) ? 1 : 0;
-    while (digit_word_index < haystack_length) {
-        const digit_word_letter* const current_digit_word_letter =
-            &(digit_word_array[digit_word_array_index][digit_word_index]);
-        if (to_lower(haystack[digit_word_index]) == current_digit_word_letter->letter) {
-            if (current_digit_word_letter->digit_value == -1) {
-                digit_word_index++;
+    while (digit_letter_index < haystack_length) {
+        const digit_word* const current_digit_word = &(digit_words[digit_words_index]);
+        if (to_lower(haystack[digit_letter_index]) ==
+            current_digit_word->word[digit_letter_index]) {
+            if (digit_letter_index + 1 < current_digit_word->word_length) {
+                digit_letter_index++;
             } else {
-                *skip_ahead = current_digit_word_letter->skip_ahead;
-                return current_digit_word_letter->digit_value;
+                *skip_ahead = current_digit_word->skip_ahead;
+                return digit_words_index;
             }
-        } else if (digit_word_index == 1 && retries > 0) {
+        } else if (digit_letter_index == 1 && retries > 0) {
             retries--;
-            digit_word_array_index++;
+            digit_words_index++;
         } else {
             return -1;
         }
