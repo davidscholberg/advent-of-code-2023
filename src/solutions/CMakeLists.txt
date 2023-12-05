@@ -3,6 +3,7 @@ target_sources(
     PRIVATE
     day_01_a.c
     day_01_b.c
+    day_02_a.c
     run.c
     run.h
     solutions.h
