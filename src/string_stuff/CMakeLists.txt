@@ -5,4 +5,6 @@ target_sources(
     cube_game.h
     digits.c
     digits.h
+    engine_schematic.c
+    engine_schematic.h
 )

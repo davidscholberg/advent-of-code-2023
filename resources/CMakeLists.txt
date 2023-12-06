@@ -2,6 +2,7 @@ set(
     resources
     day_01_string_array.txt
     day_02_string_array.txt
+    day_03_string_array.txt
 )
 foreach(resource IN LISTS resources)
     add_custom_command(
