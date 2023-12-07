@@ -6,6 +6,7 @@ target_sources(
     day_02_a.c
     day_02_b.c
     day_03_a.c
+    day_03_b.c
     run.c
     run.h
     solutions.h

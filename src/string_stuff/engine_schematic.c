@@ -5,6 +5,7 @@
 #include "digits.h"
 #include "engine_schematic.h"
 
+#define adjacent_coords_count 8
 #define side_coord_count 3
 #define vertical_coords_count 2
 
@@ -26,6 +27,10 @@ typedef struct engine_schematic {
     const int column_count;
 } engine_schematic;
 
+// For the gear symbol located at the given coords in the given schematic, return the gear ratio if
+// it's a valid gear, otherwise return -1.
+int get_gear_ratio(const int row, const int column, const engine_schematic* const schematic);
+
 // Check if the given coords of the given schematic contain an engine part symbol.
 bool has_engine_part_symbol(
     const coord* const coords,
@@ -40,6 +45,96 @@ bool is_engine_part_number(
     const int column,
     const engine_schematic* const schematic
 );
+
+int get_gear_ratio(const int row, const int column, const engine_schematic* const schematic) {
+    // All coords surrounding the given row and column point.
+    const coord adjacent_coords[adjacent_coords_count] = {
+        {row - 1, column - 1},
+        {row - 1, column},
+        {row - 1, column + 1},
+        {row, column - 1},
+        {row, column + 1},
+        {row + 1, column - 1},
+        {row + 1, column},
+        {row + 1, column + 1},
+    };
+
+    // Coords that point to the start of numbers that are adjacent to the given row and column.
+    coord adjacent_numbers[adjacent_coords_count] = {
+        {-1, -1},
+        {-1, -1},
+        {-1, -1},
+        {-1, -1},
+        {-1, -1},
+        {-1, -1},
+        {-1, -1},
+        {-1, -1},
+    };
+
+    // Check for adjacent numbers.
+    for (int i = 0; i < adjacent_coords_count; i++) {
+        if (is_coord_valid(adjacent_coords[i], schematic->row_count, schematic->column_count)) {
+            int current_row = adjacent_coords[i].row;
+            int current_column = adjacent_coords[i].column;
+            if (is_ascii_digit(schematic->lines[current_row][current_column])) {
+                adjacent_numbers[i].row = current_row;
+                adjacent_numbers[i].column = current_column - 1;
+                // Find the beginning of the number.
+                while (is_coord_valid(
+                           adjacent_numbers[i],
+                           schematic->row_count,
+                           schematic->column_count
+                       ) &&
+                       is_ascii_digit(
+                           schematic->lines[adjacent_numbers[i].row][adjacent_numbers[i].column]
+                       )) {
+                    adjacent_numbers[i].column--;
+                }
+                // At this point, the column needs to be incremented by one to be at the beginning
+                // of the number.
+                adjacent_numbers[i].column++;
+            }
+        }
+    }
+
+    // Eliminate duplicate adjacent numbers and get the unique adjacent numbers count.
+    int adjacent_number_count = 0;
+    for (int i = 0; i < adjacent_coords_count; i++) {
+        if (adjacent_numbers[i].row == -1) {
+            continue;
+        }
+
+        adjacent_number_count++;
+
+        for (int j = i + 1; j < adjacent_coords_count; j++) {
+            if (adjacent_numbers[j].row == -1) {
+                continue;
+            }
+
+            if (adjacent_numbers[i].row == adjacent_numbers[j].row &&
+                adjacent_numbers[i].column == adjacent_numbers[j].column) {
+                adjacent_numbers[j].row = -1;
+                adjacent_numbers[j].column = -1;
+            }
+        }
+    }
+
+    if (adjacent_number_count != 2) {
+        return -1;
+    }
+
+    int gear_ratio = 1;
+    for (int i = 0; i < adjacent_coords_count; i++) {
+        if (adjacent_numbers[i].row == -1) {
+            continue;
+        }
+
+        gear_ratio *=
+            atoi(&(schematic->lines[adjacent_numbers[i].row][adjacent_numbers[i].column]));
+    }
+
+    return gear_ratio;
+}
 
 bool has_engine_part_symbol(
     const coord* const coords,
@@ -142,4 +237,30 @@ int sum_engine_part_numbers(char** lines, const int line_count) {
     }
 
     return engine_part_number_sum;
+}
+
+int sum_engine_gear_ratios(char** lines, const int line_count) {
+    const int column_count = strlen(lines[0]);
+
+    const engine_schematic schematic = {
+        lines,
+        line_count,
+        column_count,
+    };
+
+    // For each gear symbol encountered, determine if it's a valid gear and add the gear ratio to
+    // the running sum.
+    int gear_ratio_sum = 0;
+    for (int i = 0; i < line_count; i++) {
+        for (int j = 0; j < column_count; j++) {
+            if (lines[i][j] == '*') {
+                int gear_ratio = get_gear_ratio(i, j, &schematic);
+                if (gear_ratio != -1) {
+                    gear_ratio_sum += gear_ratio;
+                }
+            }
+        }
+    }
+
+    return gear_ratio_sum;
 }

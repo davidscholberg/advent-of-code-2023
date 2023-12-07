@@ -11,3 +11,4 @@ solution_declaration(01, b);
 solution_declaration(02, a);
 solution_declaration(02, b);
 solution_declaration(03, a);
+solution_declaration(03, b);
